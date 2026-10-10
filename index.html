@@ -210,8 +210,9 @@ footer{padding:30px 0 50px;font-size:12.5px;color:var(--ink-3)}
       <div class="q">Quan sát → so sánh → đào sâu: vì sao cửa hàng bán chạy nhất lại lãi ít hơn trên mỗi đơn?</div></div></div>
     <div class="grid2">
       <div class="chartbox">
-        <p class="ctitle">Cơ cấu doanh thu theo cửa hàng</p>
-        <div class="toggle" id="c2-toggle"><button data-v="abs" class="on">Triệu đồng</button><button data-v="pct">% doanh thu cửa hàng</button></div>
+        <p class="ctitle">Doanh thu và lợi nhuận theo cửa hàng, chia theo danh mục</p>
+        <p class="csub">Cửa hàng luôn xếp theo doanh thu giảm dần. Chuyển sang "Lợi nhuận" để thấy thứ hạng thay đổi.</p>
+        <div class="toggle" id="c2-toggle"><button data-v="abs" class="on">Doanh thu</button><button data-v="pct">% doanh thu</button><button data-v="profit">Lợi nhuận</button></div>
         <div class="legend cat-legend"></div>
         <div class="chart" id="c2a"></div>
         <div class="hint">Rê chuột lên chú giải để làm nổi một danh mục. Bấm vào một cửa hàng để lọc.</div>
@@ -223,9 +224,9 @@ footer{padding:30px 0 50px;font-size:12.5px;color:var(--ink-3)}
       </div>
     </div>
     <div class="explain">
-      <div><h4>Biểu đồ cho thấy gì</h4><p>Bên trái là doanh thu từng cửa hàng chia theo danh mục (chuyển sang % để so sánh cơ cấu). Bên phải là BLN của từng cặp cửa hàng – danh mục.</p></div>
+      <div><h4>Biểu đồ cho thấy gì</h4><p>Bên trái là doanh thu từng cửa hàng chia theo danh mục. Nút <b>% doanh thu</b> giúp so sánh cơ cấu, nút <b>Lợi nhuận</b> cho thấy số lãi thực của từng cửa hàng. Bên phải là BLN của từng cặp cửa hàng – danh mục.</p></div>
       <div><h4>Quy luật</h4><p>Quận 1 dẫn đầu doanh thu (<b>55.7 tr</b>, 72 giao dịch) nhưng BLN chỉ <b>21.5%</b>, trong khi ba cửa hàng còn lại đạt 26–27%. Điện tử chiếm <b>53%</b> doanh thu của Quận 1, so với 19–29% ở các nơi khác. Trong cùng một danh mục, BLN của Quận 1 tương đương các cửa hàng khác (ví dụ Thời trang 34.7%).</p></div>
-      <div><h4>Vì sao quan trọng</h4><p>BLN thấp của Quận 1 đến từ <b>cơ cấu sản phẩm</b>, không phải do định giá hay vận hành kém. Kết quả là <b>Thủ Đức lãi nhiều hơn (14.0 tr) so với Quận 1 (12.0 tr)</b> dù doanh thu thấp hơn. Dịch chuyển cơ cấu của Quận 1 sang Thời trang sẽ tăng lợi nhuận.</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>BLN thấp của Quận 1 đến từ <b>cơ cấu sản phẩm</b>, không phải do định giá hay vận hành kém. Kết quả là <b>Thủ Đức lãi nhiều hơn (14.0 tr) so với Quận 1 (12.0 tr)</b> dù doanh thu thấp hơn (xem chế độ <b>Lợi nhuận</b> ở biểu đồ bên trái). Dịch chuyển cơ cấu của Quận 1 sang Thời trang sẽ tăng lợi nhuận.</p></div>
     </div>
   </section>
 
@@ -464,24 +465,33 @@ function chart1(){
 d3.selectAll('#c2-toggle button').on('click',function(){c2Mode=this.dataset.v;d3.selectAll('#c2-toggle button').classed('on',function(){return this.dataset.v===c2Mode;});chart2a();});
 function chart2a(){
   const a=rows({store:true});
-  const data=STORES.map(s=>{const rs=a.filter(d=>d.Store===s);const o={s,...agg(rs)};CATS.forEach(c=>o[c]=d3.sum(rs.filter(d=>d.Product_Category===c),d=>d.Revenue));return o;}).sort((p,q)=>q.R-p.R);
-  const pct=c2Mode==='pct';
-  const series=d3.stack().keys(CATS).value((d,k)=>pct?(d.R?d[k]/d.R:0):d[k])(data);
+  // per store: revenue and profit split by category (x order always by revenue, so the two views can be compared)
+  const data=STORES.map(s=>{const rs=a.filter(d=>d.Store===s);const o={s,...agg(rs),rev:{},prof:{}};
+    CATS.forEach(c=>{const rc=rs.filter(d=>d.Product_Category===c);o.rev[c]=d3.sum(rc,d=>d.Revenue);o.prof[c]=d3.sum(rc,d=>d.Profit);});return o;}).sort((p,q)=>q.R-p.R);
+  const mode=c2Mode,pct=mode==='pct',prof=mode==='profit';
+  const val=(d,k)=>prof?d.prof[k]:pct?(d.R?d.rev[k]/d.R:0):d.rev[k];
+  const series=d3.stack().keys(CATS).value(val).offset(d3.stackOffsetDiverging)(data);
   const m={t:44,r:8,b:30,l:46};const {g,w,h}=svgIn('c2a',336,m);
   const x=d3.scaleBand().domain(data.map(d=>d.s)).range([0,w]).padding(.32);
-  const y=d3.scaleLinear().domain([0,pct?1:(d3.max(data,d=>d.R)||1)]).nice().range([h,0]);
-  yGrid(g,y,w,pct?d3.format('.0%'):v=>v/1e6);label(g,pct?'Tỉ trọng doanh thu cửa hàng':'Triệu đồng',-m.l+2,-30);
-  const top=d=>{for(let i=CATS.length-1;i>=0;i--)if(d[CATS[i]]>0)return CATS[i];};
+  const lo=d3.min(series,s=>d3.min(s,d=>d[0]))||0,hi=d3.max(series,s=>d3.max(s,d=>d[1]))||1;
+  const y=d3.scaleLinear().domain([Math.min(0,lo),pct?1:hi]).nice().range([h,0]);
+  yGrid(g,y,w,pct?d3.format('.0%'):v=>v/1e6);
+  label(g,pct?'Tỉ trọng doanh thu cửa hàng':prof?'Lợi nhuận (triệu đồng)':'Doanh thu (triệu đồng)',-m.l+2,-30);
+  const top=d=>{for(let i=CATS.length-1;i>=0;i--)if(val(d,CATS[i])>0)return CATS[i];};
   series.forEach(s=>{
-    g.append('g').selectAll('path').data(s.filter(d=>d[1]>d[0])).join('path').attr('data-cat',s.key)
-      .attr('d',d=>{const x0=x(d.data.s),y1=y(d[1]),hh=y(d[0])-y(d[1]);return top(d.data)===s.key?barUp(x0,y1,x.bandwidth(),hh):`M${x0},${y1}h${x.bandwidth()}v${hh}h${-x.bandwidth()}Z`;})
+    g.append('g').selectAll('path').data(s.filter(d=>d[1]!==d[0])).join('path').attr('data-cat',s.key)
+      .attr('d',d=>{const x0=x(d.data.s),y1=y(d[1]),hh=y(d[0])-y(d[1]);return top(d.data)===s.key&&d[1]>0?barUp(x0,y1,x.bandwidth(),hh):`M${x0},${y1}h${x.bandwidth()}v${hh}h${-x.bandwidth()}Z`;})
       .attr('fill',CAT_COLOR[s.key]).attr('stroke','var(--surface)').attr('stroke-width',1.5)
       .attr('opacity',d=>active('store',d.data.s)?1:.3).style('cursor','pointer')
       .on('mousemove',(ev,d)=>{const rs=a.filter(r=>r.Store===d.data.s&&r.Product_Category===s.key);const q=agg(rs);
-        showTip(ev,`<b>${L(d.data.s)} · ${L(s.key)}</b>`+row('Doanh thu',fVND(q.R))+row('Tỉ trọng trong cửa hàng',fP(q.R/d.data.R))+row('Lợi nhuận',fVND(q.P))+row('BLN',fP(q.m))+row('Số giao dịch',q.n));hoverCat(s.key);})
+        showTip(ev,`<b>${L(d.data.s)} · ${L(s.key)}</b>`+row('Doanh thu',fVND(q.R))+row('Tỉ trọng doanh thu',fP(q.R/d.data.R))+row('Lợi nhuận',fVND(q.P),q.P<0?'neg':'')+row('Tỉ trọng lợi nhuận',fP(q.P/d.data.P))+row('BLN',fP(q.m))+row('Số giao dịch',q.n));hoverCat(s.key);})
       .on('mouseleave',()=>{hideTip();hoverCat(null);}).on('click',(ev,d)=>toggle('store',d.data.s));
   });
-  g.selectAll('.ml').data(data).join('text').attr('class','dlabel strong').attr('x',d=>x(d.s)+x.bandwidth()/2).attr('y',d=>y(pct?1:d.R)-7).attr('text-anchor','middle').text(d=>d.n?(x.bandwidth()<75?'':'BLN ')+fP(d.m):'');
+  if(lo<0)g.append('line').attr('x1',0).attr('x2',w).attr('y1',y(0)).attr('y2',y(0)).attr('stroke','#8f8d86');
+  const wide=x.bandwidth()>=75;
+  g.selectAll('.ml').data(data).join('text').attr('class','dlabel strong').attr('x',d=>x(d.s)+x.bandwidth()/2)
+    .attr('y',d=>y(pct?1:Math.max(0,prof?d.P:d.R))-7).attr('text-anchor','middle')
+    .text(d=>!d.n?'':prof?(wide?'LN ':'')+fM(d.P):(wide?'BLN ':'')+fP(d.m));
   xAxis(g,x,h,L);
 }
 function chart2b(){
