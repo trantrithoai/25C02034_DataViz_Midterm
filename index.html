@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>25C02034_DataViz_Midterm · Bán lẻ TP.HCM 2025</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="data.js"></script>
+<style>
+:root{
+  --bg:#f4f3ef; --surface:#fcfcfb; --surface-2:#f0efec; --line:#e4e2dc; --grid:#ebe9e4;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#7a7974;
+  --accent:#2a78d6; --rev:#b9c7d8; --prof:#1c5cab; --crit:#d03b3b;
+  --s-margin:#4a3aa7; --s-disc:#e34948;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+h1,h2,h3{line-height:1.25;margin:0}
+/* header */
+header.hero{padding:48px 0 28px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+h1{font-size:clamp(28px,4.2vw,42px);font-weight:700;letter-spacing:-.02em;margin:10px 0 12px;max-width:900px}
+.lede{font-size:17px;color:var(--ink-2);max-width:820px;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:18px;font-size:13px;color:var(--ink-2)}
+.meta b{color:var(--ink)}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+@media (max-width:600px){.card{padding:16px}.wrap{padding:0 14px}.ihead h2{font-size:18px}}
+section{margin:22px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-55-45{display:grid;grid-template-columns:1.15fr .85fr;gap:20px}
+@media (max-width:860px){.grid2,.grid-55-45{grid-template-columns:1fr}}
+.overview p{margin:.4em 0;color:var(--ink-2)}
+.cols{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.cols span{font-size:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--ink-2);font-family:ui-monospace,Menlo,monospace}
+.notes{font-size:13px;color:var(--ink-2);padding-left:18px;margin:8px 0 0}
+.notes li{margin:3px 0}
+/* filter bar */
+.filters{position:sticky;top:0;z-index:20;background:rgba(244,243,239,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 0}
+@media (max-width:700px){.filters{position:static}}
+.filters .wrap{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.fgroup{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.flabel{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600;margin-right:2px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font:500 12.5px Inter,sans-serif;color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip:hover{border-color:var(--ink-3)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .dot{width:9px;height:9px;border-radius:50%}
+select{font:500 12.5px Inter,sans-serif;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:var(--surface);color:var(--ink)}
+.btn{font:600 12.5px Inter,sans-serif;border:1px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:8px;padding:4px 10px;cursor:pointer}
+.btn:hover{background:var(--ink);color:#fff}
+.fcount{margin-left:auto;font-size:12.5px;color:var(--ink-2)}
+.fcount b{color:var(--ink)}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+@media (max-width:860px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .k{font-size:12px;color:var(--ink-3);font-weight:500}
+.kpi .v{font-size:24px;font-weight:700;letter-spacing:-.01em;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11.5px;color:var(--ink-3)}
+/* story nav */
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.toc a{font-size:13px;text-decoration:none;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.toc a:hover{color:var(--ink);border-color:var(--ink-3)}
+/* insight */
+.insight{scroll-margin-top:70px}
+.ihead{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+.inum{flex:none;width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700}
+.ihead h2{font-size:21px;font-weight:700;letter-spacing:-.01em}
+.ihead .q{font-size:13px;color:var(--ink-3);margin-top:4px}
+.chartbox{min-width:0}
+.ctitle{font-size:14px;font-weight:600;margin:0 0 2px}
+.csub{font-size:12.5px;color:var(--ink-3);margin:0 0 8px}
+.chart{width:100%;position:relative}
+.hint{font-size:12px;color:var(--ink-3);margin-top:6px}
+.hint::before{content:"↳ ";}
+.explain{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+@media (max-width:860px){.explain{grid-template-columns:1fr}}
+.explain h4{margin:0 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.explain p{margin:0;font-size:14px;color:var(--ink-2)}
+.explain b{color:var(--ink)}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.toggle button{font:500 12px Inter,sans-serif;border:0;background:var(--surface);padding:4px 10px;cursor:pointer;color:var(--ink-2)}
+.toggle button.on{background:var(--ink);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink-2);margin:0 0 6px}
+.legend .it{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.legend .it.off{opacity:.35}
+.legend .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+.legend .ln{width:16px;height:2.5px;border-radius:2px;display:inline-block}
+.stat{font-size:12.5px;color:var(--ink-2);margin-top:4px}
+.stat b{color:var(--ink)}
+.scroll-x{overflow-x:auto}
+/* svg */
+svg{display:block;overflow:visible}
+svg text{font-family:Inter,sans-serif}
+.grid line{stroke:var(--grid)}
+.grid .domain{display:none}
+.grid text,.axis text{fill:var(--ink-3);font-size:11px}
+.axis .domain,.axis line{stroke:#cfccc4}
+.axis-label{fill:var(--ink-3);font-size:11px}
+.dlabel{fill:var(--ink-2);font-size:11px;font-weight:500}
+.dlabel.strong{fill:var(--ink);font-weight:600}
+.dim{opacity:.15 !important}
+circle.unsel{opacity:.1 !important}
+path.pcl.unsel{stroke-opacity:.03 !important}
+circle.sel{stroke:var(--ink) !important;stroke-width:1.5px !important}
+path.pcl.sel{stroke-width:2.2px;stroke-opacity:.95 !important}
+.hover-band{fill:var(--ink);opacity:0;pointer-events:none}
+.brush .selection{fill:var(--accent);fill-opacity:.08;stroke:var(--accent)}
+/* tooltip */
+#tip{position:fixed;pointer-events:none;opacity:0;z-index:50;background:#161615;color:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;max-width:280px;box-shadow:0 6px 24px rgba(0,0,0,.18);transition:opacity .08s}
+#tip b{font-weight:600}
+#tip .r{display:flex;justify-content:space-between;gap:14px}
+#tip .r span:first-child{color:#bdbbb4}
+#tip .neg{color:#ff8f8f}
+/* selection bar + table */
+.selbar{display:none;align-items:center;gap:10px;font-size:13px;background:#eaf2fc;border:1px solid #b7d3f6;border-radius:10px;padding:8px 12px;margin-top:12px}
+.selbar.show{display:flex}
+.tablewrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--grid)}
+th{position:sticky;top:0;background:var(--surface-2);font-weight:600;cursor:pointer;color:var(--ink-2)}
+th:hover{color:var(--ink)}
+td.num,th.num{text-align:right}
+tr.hl td{background:#eaf2fc}
+td.neg{color:var(--crit);font-weight:600}
+.conclusion ol{padding-left:20px;margin:8px 0}
+.conclusion li{margin:8px 0;color:var(--ink-2)}
+.conclusion li b{color:var(--ink)}
+footer{padding:30px 0 50px;font-size:12.5px;color:var(--ink-3)}
+</style>
+</head>
+<body>
+<div id="tip"></div>
+
+<header class="hero wrap">
+  <div class="eyebrow">Đồ án giữa kỳ · Trực quan hóa dữ liệu tương tác</div>
+  <h1>Bán lẻ đô thị TP.HCM 2025: Doanh thu không phải là lợi nhuận</h1>
+  <p class="lede">Phân tích tương tác 240 giao dịch bán lẻ tại bốn cửa hàng ở TP. Hồ Chí Minh. Câu chuyện chính: sản phẩm, cửa hàng và tháng mang về nhiều tiền nhất thường không phải là nơi lãi nhiều nhất. Giảm giá, cơ cấu sản phẩm và tốc độ giao hàng giải thích vì sao.</p>
+  <div class="meta">
+    <span>Học viên: <b>Trần Trí Thoại</b></span>
+    <span>MSHV: <b>25C02034</b></span>
+    <span>Đồ án: <b>25C02034_DataViz_Midterm</b></span>
+  </div>
+  <nav class="toc">
+    <a href="#overview">Dữ liệu</a><a href="#i1">1 · Danh mục</a><a href="#i2">2 · Cửa hàng</a><a href="#i3">3 · Giảm giá</a><a href="#i4">4 · Giao dịch lỗ</a><a href="#i5">5 · Giao hàng</a><a href="#i6">6 · Mùa vụ</a><a href="#explore">Bảng giao dịch</a><a href="#conclusion">Kết luận</a>
+  </nav>
+</header>
+
+<div class="filters">
+  <div class="wrap">
+    <div class="fgroup"><span class="flabel">Cửa hàng</span><span id="f-store"></span></div>
+    <div class="fgroup"><span class="flabel">Danh mục</span><span id="f-cat"></span></div>
+    <div class="fgroup"><span class="flabel">Khách hàng</span><span id="f-cust"></span></div>
+    <div class="fgroup"><span class="flabel">Tháng</span><select id="m0" aria-label="Từ tháng"></select>–<select id="m1" aria-label="Đến tháng"></select></div>
+    <button class="btn" id="reset">Đặt lại</button>
+    <div class="fcount" id="fcount"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section id="overview" class="card overview">
+    <div class="grid-55-45">
+      <div>
+        <h3 style="font-size:17px">Giới thiệu bộ dữ liệu</h3>
+        <p><b>Urban Retail Sales – HCMC 2025</b> gồm <b>240 giao dịch bán hàng</b> từ 04/01 đến 30/12/2025 tại bốn cửa hàng: <b>Quận 1, Quận 3, Quận 7 và Thủ Đức</b>. Dữ liệu có 20 sản phẩm thuộc 5 danh mục (Điện tử, Thời trang, Thể thao, Gia dụng, Thực phẩm &amp; Đồ uống), bán cho 4 nhóm khách hàng qua 4 phương thức thanh toán. Mỗi dòng ghi lại giá, mức giảm giá, doanh thu, giá vốn, lợi nhuận, cùng điểm đánh giá của khách và số ngày giao hàng.</p>
+        <div class="cols"><span>Date</span><span>Store</span><span>Product_Category</span><span>Product</span><span>Customer_Type</span><span>Payment_Method</span><span>Quantity</span><span>Unit_Price</span><span>Discount</span><span>Revenue</span><span>Cost</span><span>Profit</span><span>Customer_Rating</span><span>Delivery_Days</span></div>
+      </div>
+      <div>
+        <h3 style="font-size:15px">Ghi chú xử lý dữ liệu</h3>
+        <ul class="notes">
+          <li>Cả 240 dòng đều thỏa <b>Revenue = Quantity × Unit_Price × (1 − Discount)</b> và <b>Profit = Revenue − Cost</b>, nên các cột tiền nhất quán với nhau.</li>
+          <li>Có <b>10 giá trị bị thiếu</b>: 6 ở <i>Customer_Rating</i>, 4 ở <i>Delivery_Days</i> (T0210 thiếu cả hai). Các dòng này chỉ bị loại khi tính trung bình điểm đánh giá và số ngày giao. Chúng vẫn được tính vào doanh thu và lợi nhuận.</li>
+          <li><b>Biên lợi nhuận (BLN)</b> = Lợi nhuận ÷ Doanh thu. BLN của một nhóm được tính bằng Σlợi nhuận ÷ Σdoanh thu, không phải trung bình BLN của từng dòng.</li>
+          <li>Đơn vị tiền là VNĐ. "tr" nghĩa là triệu đồng.</li>
+          <li>Dùng <b>thanh lọc</b> (luôn nằm ở đầu trang khi cuộn) để lọc mọi biểu đồ. Các con số trong phần nhận xét được tính trên toàn bộ dữ liệu.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <!-- INSIGHT 1 -->
+  <section class="card insight" id="i1">
+    <div class="ihead"><div class="inum">1</div><div>
+      <h2>Điện tử mang về nhiều doanh thu nhất nhưng lãi ít nhất trên mỗi đồng bán ra. Thời trang mới là nguồn lợi nhuận chính.</h2>
+      <div class="q">Câu hỏi: danh mục bán được nhiều tiền nhất có phải cũng lãi nhiều nhất?</div></div></div>
+    <div class="toggle" id="c1-toggle"><button data-v="rp" class="on">Doanh thu và lợi nhuận</button><button data-v="m">Biên lợi nhuận</button></div>
+    <div class="legend" id="c1-legend"><span class="it"><i class="sw" style="background:var(--rev)"></i>Doanh thu</span><span class="it"><i class="sw" style="background:var(--prof)"></i>Lợi nhuận</span></div>
+    <div class="chart" id="c1"></div>
+    <div class="hint">Rê chuột lên một danh mục để xem chi tiết. Bấm vào để lọc cả trang theo danh mục đó (bấm lần nữa để bỏ lọc).</div>
+    <div class="explain">
+      <div><h4>Biểu đồ cho thấy gì</h4><p>Doanh thu và lợi nhuận đặt cạnh nhau cho từng danh mục, sắp xếp theo doanh thu. Nhãn phía trên mỗi nhóm cột là biên lợi nhuận.</p></div>
+      <div><h4>Quy luật</h4><p><b>Điện tử</b> có doanh thu cao nhất (<b>63.8 tr</b>, 34% tổng doanh thu) nhưng BLN chỉ <b>15.3%</b>, thấp nhất trong các danh mục. <b>Thời trang</b> doanh thu thấp hơn (51.7 tr) nhưng lãi <b>17.4 tr</b> với BLN <b>33.6%</b>, gấp khoảng 1.8 lần lợi nhuận của Điện tử.</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>Giá vốn hàng Điện tử chiếm khoảng <b>75%</b> giá niêm yết, còn Thời trang chỉ khoảng <b>58%</b>. Mỗi đồng doanh thu Thời trang mang lại lợi nhuận gần gấp đôi. Nếu xếp hạng danh mục theo doanh thu, cửa hàng sẽ đầu tư sai chỗ.</p></div>
+    </div>
+  </section>
+
+  <!-- INSIGHT 2 -->
+  <section class="card insight" id="i2">
+    <div class="ihead"><div class="inum">2</div><div>
+      <h2>Quận 1 bán nhiều nhất nhưng biên lợi nhuận thấp nhất, vì hơn một nửa doanh thu của nó đến từ hàng Điện tử</h2>
+      <div class="q">Quan sát → so sánh → đào sâu: vì sao cửa hàng bán chạy nhất lại lãi ít hơn trên mỗi đơn?</div></div></div>
+    <div class="grid2">
+      <div class="chartbox">
+        <p class="ctitle">Cơ cấu doanh thu theo cửa hàng</p>
+        <div class="toggle" id="c2-toggle"><button data-v="abs" class="on">Triệu đồng</button><button data-v="pct">% doanh thu cửa hàng</button></div>
+        <div class="legend cat-legend"></div>
+        <div class="chart" id="c2a"></div>
+        <div class="hint">Rê chuột lên chú giải để làm nổi một danh mục. Bấm vào một cửa hàng để lọc.</div>
+      </div>
+      <div class="chartbox">
+        <p class="ctitle">Biên lợi nhuận theo cửa hàng × danh mục</p>
+        <p class="csub">Ô càng đậm thì BLN càng cao. Số nhỏ bên dưới là doanh thu.</p>
+        <div class="chart" id="c2b"></div>
+      </div>
+    </div>
+    <div class="explain">
+      <div><h4>Biểu đồ cho thấy gì</h4><p>Bên trái là doanh thu từng cửa hàng chia theo danh mục (chuyển sang % để so sánh cơ cấu). Bên phải là BLN của từng cặp cửa hàng – danh mục.</p></div>
+      <div><h4>Quy luật</h4><p>Quận 1 dẫn đầu doanh thu (<b>55.7 tr</b>, 72 giao dịch) nhưng BLN chỉ <b>21.5%</b>, trong khi ba cửa hàng còn lại đạt 26–27%. Điện tử chiếm <b>53%</b> doanh thu của Quận 1, so với 19–29% ở các nơi khác. Trong cùng một danh mục, BLN của Quận 1 tương đương các cửa hàng khác (ví dụ Thời trang 34.7%).</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>BLN thấp của Quận 1 đến từ <b>cơ cấu sản phẩm</b>, không phải do định giá hay vận hành kém. Kết quả là <b>Thủ Đức lãi nhiều hơn (14.0 tr) so với Quận 1 (12.0 tr)</b> dù doanh thu thấp hơn. Dịch chuyển cơ cấu của Quận 1 sang Thời trang sẽ tăng lợi nhuận.</p></div>
+    </div>
+  </section>
+
+  <!-- INSIGHT 3 -->
+  <section class="card insight" id="i3">
+    <div class="ihead"><div class="inum">3</div><div>
+      <h2>Mỗi 5% giảm giá thêm làm biên lợi nhuận tụt mạnh. Trên 20% cửa hàng gần như không còn lãi, và ở mức 35% thì lỗ.</h2>
+      <div class="q">Câu hỏi: giảm giá ảnh hưởng thế nào đến khả năng sinh lời?</div></div></div>
+    <div class="grid-55-45">
+      <div class="chartbox">
+        <p class="ctitle">Từng giao dịch: mức giảm giá và biên lợi nhuận</p>
+        <p class="csub">Kích thước chấm thể hiện doanh thu. Chấm có viền đỏ là giao dịch lỗ. Các đường cong là BLN <i>lý thuyết</i> của từng danh mục ở mỗi mức giảm giá, tính từ tỉ lệ giá vốn.</p>
+        <div class="legend cat-legend"></div>
+        <div class="chart" id="c3b"></div>
+        <div class="hint">Kéo chuột để chọn (brush) một nhóm điểm. Các điểm đó được làm nổi trên biểu đồ tọa độ song song (Nhận xét 4) và liệt kê trong bảng giao dịch.</div>
+      </div>
+      <div class="chartbox">
+        <p class="ctitle">Biên lợi nhuận theo mức giảm giá</p>
+        <p class="csub">Σlợi nhuận ÷ Σdoanh thu ở mỗi mức giảm giá (trục ngang). n = số giao dịch.</p>
+        <div class="chart" id="c3a"></div>
+        <div class="stat" id="c3-stat"></div>
+      </div>
+    </div>
+    <div class="explain">
+      <div><h4>Biểu đồ cho thấy gì</h4><p>Biểu đồ phân tán thể hiện BLN của từng giao dịch theo mức giảm giá. Biểu đồ cột tính BLN gộp ở mỗi mức. Biểu đồ cột phù hợp để so sánh 8 mức rời rạc; biểu đồ phân tán cho thấy độ phân tán và các điểm bất thường.</p></div>
+      <div><h4>Quy luật</h4><p>BLN giảm đều: <b>33.9%</b> khi không giảm giá, khoảng 26% ở mức 10–15%, <b>15.4%</b> ở 20%, <b>5.8%</b> ở 30% và <b>−1.3%</b> ở 35%. Tương quan rất mạnh (r ≈ −0.71). Đơn giảm giá sâu cũng bị <b>đánh giá thấp hơn</b>: 4.44 ở mức 0% so với 3.60 ở mức 30%.</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>Giảm giá trừ thẳng vào biên lợi nhuận vì giá vốn không đổi. Các đường cong lý thuyết cho thấy cùng một mức giảm gây thiệt hại lớn hơn nhiều cho danh mục có BLN thấp. Giảm giá sâu cũng không làm khách hài lòng hơn. Nên đặt trần giảm giá riêng cho từng danh mục thay vì áp dụng đồng loạt.</p></div>
+    </div>
+  </section>
+
+  <!-- INSIGHT 4 -->
+  <section class="card insight" id="i4">
+    <div class="ihead"><div class="inum">4</div><div>
+      <h2>Cả 6 giao dịch lỗ có chung một đặc điểm: giảm giá từ 25% trở lên trên mặt hàng có biên lợi nhuận thấp</h2>
+      <div class="q">Tìm điểm bất thường: giao dịch nào bị lỗ, và chúng có gì chung?</div></div></div>
+    <p class="ctitle">Hồ sơ giao dịch, mỗi đường là một giao dịch</p>
+    <p class="csub">Màu đường theo danh mục. Kéo chuột theo chiều dọc trên trục bất kỳ để lọc (brush). Có thể lọc trên nhiều trục cùng lúc.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px">
+      <div class="legend cat-legend" style="margin:0"></div>
+      <label style="font-size:12.5px;color:var(--ink-2);display:inline-flex;gap:6px;align-items:center;margin-left:auto"><input type="checkbox" id="pc-loss" checked> Làm nổi giao dịch lỗ</label>
+      <button class="btn" id="sel-loss">Chọn các giao dịch lỗ</button>
+    </div>
+    <div class="scroll-x"><div class="chart" id="c4" style="min-width:680px"></div></div>
+    <div class="explain">
+      <div><h4>Biểu đồ cho thấy gì</h4><p>Biểu đồ tọa độ song song (parallel coordinates) thể hiện 7 biến của mỗi giao dịch cùng lúc. Nhờ vậy có thể thấy một nhóm nhỏ giao dịch giống nhau ở những điểm nào trên nhiều chiều dữ liệu.</p></div>
+      <div><h4>Quy luật</h4><p>6 đường đậm (giao dịch lỗ) đều xuất phát từ <b>phần trên của trục Giảm giá (25–35%)</b>, đều nằm dưới 0 trên trục BLN, và đều kết thúc ở <b>điểm đánh giá thấp (3.6–4.2)</b>. Bốn giao dịch là hàng <b>Điện tử</b> (2 sạc dự phòng, tai nghe, loa) và hai là <b>Protein Drink giảm 35%</b>. <b>Không có</b> giao dịch nào trong 217 giao dịch giảm giá dưới 25% bị lỗ.</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>Mức giảm giá hòa vốn = 1 − tỉ lệ giá vốn. Với Điện tử (giá vốn ≈ 75% giá niêm yết) là khoảng <b>25%</b>. Với Thực phẩm &amp; Đồ uống (≈ 68%) là khoảng <b>32%</b>. Với Thời trang (≈ 58%) là khoảng <b>42%</b>, nên hàng Thời trang giảm 25–30% vẫn lãi khoảng 20%. Một quy tắc đơn giản đã có thể tránh cả sáu khoản lỗ: giới hạn giảm giá Điện tử ở 20% và Thực phẩm &amp; Đồ uống ở 25%.</p></div>
+    </div>
+  </section>
+
+  <!-- INSIGHT 5 -->
+  <section class="card insight" id="i5">
+    <div class="ihead"><div class="inum">5</div><div>
+      <h2>Tốc độ giao hàng ảnh hưởng mạnh nhất đến điểm đánh giá, và Thủ Đức giao chậm nên bị đánh giá thấp nhất</h2>
+      <div class="q">Câu hỏi: điều gì quyết định mức hài lòng của khách hàng?</div></div></div>
+    <div class="grid2">
+      <div class="chartbox">
+        <p class="ctitle">Điểm đánh giá theo thời gian giao hàng</p>
+        <p class="csub">Mỗi chấm là một giao dịch (dàn ngang để không chồng lên nhau). Vạch đậm và đường nối là điểm trung bình ở mỗi mức thời gian giao.</p>
+        <div class="chart" id="c5a"></div>
+        <div class="stat" id="c5-stat"></div>
+      </div>
+      <div class="chartbox">
+        <p class="ctitle">Tốc độ giao hàng của từng cửa hàng</p>
+        <p class="csub">Tỉ lệ đơn hàng theo số ngày giao. Bên phải: số ngày giao trung bình và điểm đánh giá trung bình.</p>
+        <div class="legend" id="c5b-legend"></div>
+        <div class="chart" id="c5b"></div>
+        <div class="hint">Bấm vào một cửa hàng để lọc. Rê chuột lên từng đoạn để xem số đơn.</div>
+      </div>
+    </div>
+    <div class="explain">
+      <div><h4>Biểu đồ cho thấy gì</h4><p>Bên trái: điểm đánh giá thay đổi thế nào khi giao hàng lâu hơn. Bên phải: biểu đồ cột chồng 100% thể hiện cơ cấu thời gian giao của từng cửa hàng.</p></div>
+      <div><h4>Quy luật</h4><p>Điểm trung bình giảm từ <b>4.51</b> (1 ngày) xuống 4.20, 3.96 rồi <b>3.63</b> (4 ngày). Hệ số tương quan r ≈ −0.68, mạnh nhất trong các biến so với điểm đánh giá. <b>67%</b> đơn của Thủ Đức mất từ 3 ngày trở lên, so với <b>14%</b> ở Quận 1. Thủ Đức giao trung bình 2.7 ngày và có điểm thấp nhất (<b>3.98</b>). Quận 1 giao nhanh nhất (1.8 ngày) và có điểm cao nhất (4.27).</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>Thủ Đức là <b>cửa hàng lãi nhiều nhất</b> nhưng có <b>trải nghiệm khách hàng tệ nhất</b>, có thể làm mất khách quay lại trong tương lai. Cải thiện khâu giao hàng là cách rõ ràng nhất để nâng mức hài lòng. Danh mục và phương thức thanh toán hầu như không ảnh hưởng đến điểm đánh giá, nên giao hàng là yếu tố cần ưu tiên.</p></div>
+    </div>
+  </section>
+
+  <!-- INSIGHT 6 -->
+  <section class="card insight" id="i6">
+    <div class="ihead"><div class="inum">6</div><div>
+      <h2>Quý 4 bán chạy nhất, nhưng khuyến mãi dày đặc trong tháng 12 khiến đây là giai đoạn có biên lợi nhuận thấp nhất năm</h2>
+      <div class="q">Câu hỏi: doanh thu và khả năng sinh lời thay đổi thế nào trong năm?</div></div></div>
+    <p class="ctitle">Doanh thu theo tháng, chia theo danh mục</p>
+    <div class="legend cat-legend"></div>
+    <div class="chart" id="c6a"></div>
+    <p class="ctitle" style="margin-top:14px">Biên lợi nhuận và mức giảm giá trung bình theo tháng</p>
+    <div class="legend"><span class="it"><i class="ln" style="background:var(--s-margin)"></i>Biên lợi nhuận</span><span class="it"><i class="ln" style="background:var(--s-disc)"></i>Giảm giá trung bình</span></div>
+    <div class="chart" id="c6b"></div>
+    <div class="hint">Rê chuột lên một tháng để xem cả hai biểu đồ cùng lúc. Bấm vào một tháng để lọc cả trang theo tháng đó (bấm lần nữa để bỏ lọc).</div>
+    <div class="explain">
+      <div><h4>Biểu đồ cho thấy gì</h4><p>Hai biểu đồ dùng chung trục tháng: phía trên là doanh thu (cột chồng theo danh mục), phía dưới là BLN và mức giảm giá (cùng đơn vị %, chung một trục). Hai biểu đồ được tách riêng có chủ đích, để không phải đặt hai thang đo khác nhau trên cùng một biểu đồ.</p></div>
+      <div><h4>Quy luật</h4><p>Quý 4 là quý mạnh nhất (<b>60.5 tr</b>, 32% doanh thu cả năm), quý 2 yếu nhất (28.3 tr). Tháng 11 có doanh thu cao nhất (22.2 tr). Nhưng mức giảm giá trung bình tăng từ ~10% ở tháng 10 lên <b>13.9% ở tháng 11 và 17.6% ở tháng 12</b>, và BLN tháng 12 giảm còn <b>20.2%</b>. Giữa các tháng, giảm giá và BLN biến động ngược chiều nhau (r ≈ −0.45).</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>Khuyến mãi mùa lễ kéo được doanh số nhưng phải đánh đổi biên lợi nhuận. Tháng 12 lãi ít hơn tháng 7 dù doanh thu tương đương (3.9 tr so với 6.1 tr). Nên tập trung khuyến mãi vào danh mục có BLN cao như Thời trang, không phải Điện tử. Lưu ý: BLN thấp của tháng 6 chỉ dựa trên 14 giao dịch.</p></div>
+    </div>
+  </section>
+
+  <!-- EXPLORER -->
+  <section class="card" id="explore">
+    <h3 style="font-size:17px">Bảng tra cứu giao dịch</h3>
+    <p class="csub" style="margin-top:4px">Xem chi tiết khi cần. Bảng hiển thị các giao dịch khớp với bộ lọc. Khi bạn chọn (brush) điểm ở Nhận xét 3 hoặc trên các trục ở Nhận xét 4, bảng chỉ hiển thị các giao dịch được chọn. Bấm vào tiêu đề cột để sắp xếp.</p>
+    <div class="selbar" id="selbar"><span id="seltext"></span><button class="btn" id="clearsel">Bỏ chọn</button></div>
+    <div class="tablewrap"><table id="tbl"></table></div>
+  </section>
+
+  <section class="card conclusion" id="conclusion">
+    <h3 style="font-size:17px">Kết luận và đề xuất</h3>
+    <ol>
+      <li><b>Đánh giá theo lợi nhuận, không theo doanh thu.</b> Điện tử và Quận 1 trông mạnh nhất nếu xét doanh thu nhưng lại có BLN thấp nhất. Thời trang và Thủ Đức tạo ra nhiều giá trị hơn so với thứ hạng doanh thu của chúng.</li>
+      <li><b>Đặt trần giảm giá theo danh mục.</b> Mức giảm giá hòa vốn = 1 − tỉ lệ giá vốn: khoảng 25% với Điện tử, 32% với Thực phẩm &amp; Đồ uống và 42% với Thời trang. Mọi khoản lỗ trong năm 2025 đều do vượt qua ngưỡng này.</li>
+      <li><b>Cải thiện giao hàng ở Thủ Đức.</b> Thời gian giao hàng là yếu tố chính quyết định điểm đánh giá, và Thủ Đức, cửa hàng lãi nhiều nhất, lại giao chậm nhất.</li>
+      <li><b>Thiết kế lại khuyến mãi mùa lễ.</b> Quý 4 mang lại doanh số, nhưng mức giảm giá trung bình ~18% trong tháng 12 kéo BLN xuống 20%. Nên nhắm khuyến mãi vào các danh mục có BLN cao.</li>
+    </ol>
+    <p class="csub">Hạn chế: 240 giao dịch là mẫu nhỏ. Một số ô cửa hàng × danh mục có dưới 5 giao dịch (ví dụ Quận 7 × Điện tử, n = 4), nên khác biệt ở cấp độ ô chỉ nên xem là tín hiệu cần kiểm tra thêm, chưa phải kết luận.</p>
+  </section>
+</main>
+
+<footer class="wrap">25C02034_DataViz_Midterm · Xây dựng bằng D3.js v7 · Dữ liệu: Urban Retail Sales – HCMC 2025 (240 giao dịch)</footer>
+
+<script>
+(function(){
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CATS=['Electronics','Fashion','Sports','Home','Food & Beverage'];
+const CAT_COLOR={'Electronics':'#2a78d6','Fashion':'#eb6834','Sports':'#1baf7a','Home':'#eda100','Food & Beverage':'#e87ba4'};
+const STORES=['District 1','District 3','District 7','Thu Duc'];
+const CUSTS=['Office Worker','Student','Family','Tourist'];
+const VI={'Electronics':'Điện tử','Fashion':'Thời trang','Sports':'Thể thao','Home':'Gia dụng','Food & Beverage':'Thực phẩm & Đồ uống',
+  'District 1':'Quận 1','District 3':'Quận 3','District 7':'Quận 7','Thu Duc':'Thủ Đức',
+  'Office Worker':'Nhân viên VP','Student':'Sinh viên','Family':'Gia đình','Tourist':'Khách du lịch',
+  'Credit Card':'Thẻ tín dụng','E-wallet':'Ví điện tử','Cash':'Tiền mặt','Bank Transfer':'Chuyển khoản'};
+const L=v=>VI[v]??v;
+const MONTHS_VI=MONTHS.map((m,i)=>'T'+(i+1));
+const DELIV_COLOR=['#86b6ef','#3987e5','#1c5cab','#0d366b'];
+const DATA=window.SALES_DATA.map(d=>({...d,margin:d.Profit/d.Revenue,mi:MONTHS.indexOf(d.Month),loss:d.Profit<0}));
+// cost as a share of list price, per category (used for the model curves)
+const COST_RATIO={};
+CATS.forEach(c=>{const a=DATA.filter(d=>d.Product_Category===c);COST_RATIO[c]=d3.sum(a,d=>d.Cost)/d3.sum(a,d=>d.Quantity*d.Unit_Price);});
+
+const state={store:new Set(),cat:new Set(),cust:new Set(),m0:0,m1:11,sel:null};
+let c1Mode='rp',c2Mode='abs';
+
+function rows(skip={}){
+  return DATA.filter(d=>(skip.store||!state.store.size||state.store.has(d.Store))
+    &&(skip.cat||!state.cat.size||state.cat.has(d.Product_Category))
+    &&(!state.cust.size||state.cust.has(d.Customer_Type))
+    &&(skip.month||(d.mi>=state.m0&&d.mi<=state.m1)));
+}
+function agg(a){const R=d3.sum(a,d=>d.Revenue),P=d3.sum(a,d=>d.Profit);
+  return{n:a.length,R,P,m:R?P/R:NaN,rating:d3.mean(a,d=>d.Customer_Rating),deliv:d3.mean(a,d=>d.Delivery_Days),disc:d3.mean(a,d=>d.Discount),loss:a.filter(d=>d.loss).length};}
+const fM=v=>d3.format(',.1f')(v/1e6)+' tr';
+const fVND=v=>d3.format(',')(Math.round(v))+' ₫';
+const fP=v=>v==null||isNaN(v)?'–':d3.format('.1f')(v*100)+'%';
+const f2=v=>v==null||isNaN(v)?'–':d3.format('.2f')(v);
+const active=(key,v)=>!state[key].size||state[key].has(v);
+function pearson(a,b){const n=a.length;if(n<3)return NaN;const ma=d3.mean(a),mb=d3.mean(b);let s=0,sa=0,sb=0;for(let i=0;i<n;i++){s+=(a[i]-ma)*(b[i]-mb);sa+=(a[i]-ma)**2;sb+=(b[i]-mb)**2;}return s/Math.sqrt(sa*sb);}
+function jitter(id,amp){const n=+id.slice(1);const r=((n*9301+49297)%233280)/233280;return (r-.5)*2*amp;}
+
+// ---------- tooltip ----------
+const tip=d3.select('#tip');
+function row(k,v,cls=''){return `<div class="r"><span>${k}</span><span class="${cls}">${v}</span></div>`;}
+function showTip(ev,html){tip.html(html).style('opacity',1);const n=tip.node(),w=n.offsetWidth,h=n.offsetHeight;let x=ev.clientX+14,y=ev.clientY+14;if(x+w>innerWidth-8)x=ev.clientX-w-14;if(y+h>innerHeight-8)y=ev.clientY-h-14;tip.style('left',x+'px').style('top',y+'px');}
+function hideTip(){tip.style('opacity',0);}
+function txTip(d){return `<b>${d.Transaction_ID} · ${d.Product}</b><br>${L(d.Store)} · ${d.Date}`+row('Danh mục',L(d.Product_Category))+row('Khách hàng',L(d.Customer_Type))+row('SL × đơn giá',d.Quantity+' × '+fVND(d.Unit_Price))+row('Giảm giá',d.Discount+'%')+row('Doanh thu',fVND(d.Revenue))+row('Lợi nhuận',fVND(d.Profit),d.loss?'neg':'')+row('BLN',fP(d.margin),d.loss?'neg':'')+row('Đánh giá',d.Customer_Rating??'thiếu')+row('Giao hàng',d.Delivery_Days!=null?d.Delivery_Days+' ngày':'thiếu');}
+
+// ---------- svg helpers ----------
+function svgIn(id,H,m){const el=document.getElementById(id);el.innerHTML='';const W=Math.max(el.clientWidth,280);
+  const svg=d3.select(el).append('svg').attr('width',W).attr('height',H).attr('role','img');
+  const g=svg.append('g').attr('transform',`translate(${m.l},${m.t})`);return{svg,g,w:W-m.l-m.r,h:H-m.t-m.b};}
+function yGrid(g,y,w,fmt,ticks=5){g.append('g').attr('class','grid').call(d3.axisLeft(y).ticks(ticks).tickSize(-w).tickFormat(fmt)).call(s=>s.selectAll('text').attr('x',-6));}
+function xAxis(g,x,h,fmt){const a=d3.axisBottom(x).tickSizeOuter(0);if(fmt)a.tickFormat(fmt);g.append('g').attr('class','axis').attr('transform',`translate(0,${h})`).call(a);}
+function label(g,text,x,y,anchor='start',cls='axis-label'){return g.append('text').attr('class',cls).attr('x',x).attr('y',y).attr('text-anchor',anchor).text(text);}
+function barUp(x,y,w,h){if(h<=0||w<=0)return'';const r=Math.min(4,w/2,h);return`M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z`;}
+function barDown(x,y,w,h){if(h<=0||w<=0)return'';const r=Math.min(4,w/2,h);return`M${x},${y}V${y+h-r}Q${x},${y+h} ${x+r},${y+h}H${x+w-r}Q${x+w},${y+h} ${x+w},${y+h-r}V${y}Z`;}
+function vBar(x,yv,y0,w){return yv<=y0?barUp(x,yv,w,y0-yv):barDown(x,y0,w,yv-y0);}
+
+// ---------- category hover highlight (shared across charts) ----------
+function hoverCat(c){d3.selectAll('[data-cat]').classed('dim',function(){return c&&this.getAttribute('data-cat')!==c;});}
+function renderCatLegends(){
+  d3.selectAll('.cat-legend').each(function(){
+    const leg=d3.select(this);leg.selectAll('*').remove();
+    CATS.forEach(c=>{leg.append('span').attr('class','it'+(active('cat',c)?'':' off')).attr('title','Bấm để lọc, rê chuột để làm nổi')
+      .html(`<i class="sw" style="background:${CAT_COLOR[c]}"></i>${L(c)}`)
+      .on('mouseenter',()=>hoverCat(c)).on('mouseleave',()=>hoverCat(null)).on('click',()=>toggle('cat',c));});
+  });
+}
+
+// ---------- filters ----------
+function chips(id,key,vals,colors){const el=d3.select('#'+id);el.selectAll('*').remove();
+  vals.forEach(v=>el.append('button').attr('class','chip'+(state[key].has(v)?' on':'')).html((colors?`<i class="dot" style="background:${colors[v]}"></i>`:'')+L(v)).on('click',()=>toggle(key,v)));}
+function toggle(key,v){state[key].has(v)?state[key].delete(v):state[key].add(v);state.sel=null;update();}
+const m0=d3.select('#m0'),m1=d3.select('#m1');
+MONTHS.forEach((m,i)=>{m0.append('option').attr('value',i).text('Tháng '+(i+1));m1.append('option').attr('value',i).text('Tháng '+(i+1));});
+m0.on('change',function(){state.m0=+this.value;if(state.m1<state.m0)state.m1=state.m0;state.sel=null;update();});
+m1.on('change',function(){state.m1=+this.value;if(state.m0>state.m1)state.m0=state.m1;state.sel=null;update();});
+d3.select('#reset').on('click',()=>{state.store.clear();state.cat.clear();state.cust.clear();state.m0=0;state.m1=11;state.sel=null;update();});
+function renderFilters(){chips('f-store','store',STORES);chips('f-cat','cat',CATS,CAT_COLOR);chips('f-cust','cust',CUSTS);
+  m0.property('value',state.m0);m1.property('value',state.m1);
+  const n=rows().length;d3.select('#fcount').html(`<b>${n}</b> / 240 giao dịch`);}
+
+// ---------- KPIs ----------
+function renderKPIs(){const a=agg(rows());const all=agg(DATA);
+  const k=[['Số giao dịch',a.n,`trên tổng ${all.n}`],['Doanh thu',fM(a.R),'triệu đồng'],['Lợi nhuận',fM(a.P),'triệu đồng'],['Biên lợi nhuận',fP(a.m),`toàn bộ dữ liệu ${fP(all.m)}`],['Đánh giá TB',f2(a.rating),'trên thang 5'],['Giao hàng TB',a.deliv!=null?d3.format('.2f')(a.deliv)+' ngày':'–','số ngày']];
+  d3.select('#kpis').selectAll('.kpi').data(k).join('div').attr('class','kpi').html(d=>`<div class="k">${d[0]}</div><div class="v">${d[1]}</div><div class="s">${d[2]}</div>`);}
+
+// ---------- Insight 1: category revenue vs profit ----------
+d3.selectAll('#c1-toggle button').on('click',function(){c1Mode=this.dataset.v;d3.selectAll('#c1-toggle button').classed('on',function(){return this.dataset.v===c1Mode;});d3.select('#c1-legend').style('visibility',c1Mode==='rp'?'visible':'hidden');chart1();});
+function chart1(){
+  const a=rows({cat:true});
+  const data=CATS.map(c=>({c,...agg(a.filter(d=>d.Product_Category===c))})).sort((p,q)=>q.R-p.R);
+  const m={t:26,r:10,b:30,l:46};const {g,w,h}=svgIn('c1',320,m);
+  const x=d3.scaleBand().domain(data.map(d=>d.c)).range([0,w]).padding(.3);
+  const tipHtml=d=>`<b>${L(d.c)}</b>`+row('Số giao dịch',d.n)+row('Doanh thu',fVND(d.R))+row('Lợi nhuận',fVND(d.P))+row('BLN',fP(d.m))+row('Giảm giá TB',d.disc!=null?d3.format('.1f')(d.disc)+'%':'–')+row('Giao dịch lỗ',d.loss);
+  let y;
+  if(c1Mode==='rp'){
+    y=d3.scaleLinear().domain([Math.min(0,d3.min(data,d=>d.P)),d3.max(data,d=>d.R)||1]).nice().range([h,0]);
+    yGrid(g,y,w,v=>v/1e6);label(g,'Triệu đồng',-m.l+2,-12);
+    const x1=d3.scaleBand().domain(['R','P']).range([0,x.bandwidth()]).padding(.1);
+    const grp=g.selectAll('.grp').data(data).join('g').attr('transform',d=>`translate(${x(d.c)},0)`).attr('opacity',d=>active('cat',d.c)?1:.3);
+    grp.selectAll('path').data(d=>[['R',d.R],['P',d.P]]).join('path').attr('d',b=>vBar(x1(b[0]),y(b[1]),y(0),x1.bandwidth())).attr('fill',b=>b[0]==='R'?'var(--rev)':'var(--prof)');
+    grp.append('text').attr('class','dlabel strong').attr('x',x.bandwidth()/2).attr('y',d=>y(Math.max(d.R,0))-7).attr('text-anchor','middle').text(d=>d.n?(x.bandwidth()<75?'':'BLN ')+fP(d.m):'');
+  } else {
+    y=d3.scaleLinear().domain([Math.min(0,d3.min(data,d=>d.m)||0),Math.max(.4,d3.max(data,d=>d.m)||0)]).nice().range([h,0]);
+    yGrid(g,y,w,d3.format('.0%'));label(g,'Biên lợi nhuận',-m.l+2,-12);
+    const grp=g.selectAll('.grp').data(data).join('g').attr('transform',d=>`translate(${x(d.c)},0)`).attr('opacity',d=>active('cat',d.c)?1:.3);
+    grp.append('path').attr('d',d=>d.n?vBar(0,y(d.m),y(0),x.bandwidth()):'').attr('fill','var(--prof)');
+    grp.append('text').attr('class','dlabel strong').attr('x',x.bandwidth()/2).attr('y',d=>y(Math.max(d.m||0,0))-7).attr('text-anchor','middle').text(d=>fP(d.m));
+    const all=agg(a);
+    g.append('line').attr('x1',0).attr('x2',w).attr('y1',y(all.m)).attr('y2',y(all.m)).attr('stroke','var(--ink)').attr('stroke-width',1.2);
+    label(g,`chung ${fP(all.m)}`,w,y(all.m)-5,'end','dlabel');
+  }
+  xAxis(g,x,h,L);
+  g.selectAll('.hit').data(data).join('rect').attr('class','hit').attr('x',d=>x(d.c)-x.step()*x.paddingInner()/2).attr('width',x.step()).attr('y',-20).attr('height',h+20).attr('fill','transparent').style('cursor','pointer')
+    .on('mousemove',(ev,d)=>showTip(ev,tipHtml(d)+'<div style="margin-top:4px;color:#bdbbb4">Bấm để lọc</div>')).on('mouseleave',hideTip).on('click',(ev,d)=>toggle('cat',d.c));
+}
+
+// ---------- Insight 2: store composition + heatmap ----------
+d3.selectAll('#c2-toggle button').on('click',function(){c2Mode=this.dataset.v;d3.selectAll('#c2-toggle button').classed('on',function(){return this.dataset.v===c2Mode;});chart2a();});
+function chart2a(){
+  const a=rows({store:true});
+  const data=STORES.map(s=>{const rs=a.filter(d=>d.Store===s);const o={s,...agg(rs)};CATS.forEach(c=>o[c]=d3.sum(rs.filter(d=>d.Product_Category===c),d=>d.Revenue));return o;}).sort((p,q)=>q.R-p.R);
+  const pct=c2Mode==='pct';
+  const series=d3.stack().keys(CATS).value((d,k)=>pct?(d.R?d[k]/d.R:0):d[k])(data);
+  const m={t:26,r:8,b:30,l:46};const {g,w,h}=svgIn('c2a',320,m);
+  const x=d3.scaleBand().domain(data.map(d=>d.s)).range([0,w]).padding(.32);
+  const y=d3.scaleLinear().domain([0,pct?1:(d3.max(data,d=>d.R)||1)]).nice().range([h,0]);
+  yGrid(g,y,w,pct?d3.format('.0%'):v=>v/1e6);label(g,pct?'Tỉ trọng doanh thu cửa hàng':'Triệu đồng',-m.l+2,-12);
+  const top=d=>{for(let i=CATS.length-1;i>=0;i--)if(d[CATS[i]]>0)return CATS[i];};
+  series.forEach(s=>{
+    g.append('g').selectAll('path').data(s.filter(d=>d[1]>d[0])).join('path').attr('data-cat',s.key)
+      .attr('d',d=>{const x0=x(d.data.s),y1=y(d[1]),hh=y(d[0])-y(d[1]);return top(d.data)===s.key?barUp(x0,y1,x.bandwidth(),hh):`M${x0},${y1}h${x.bandwidth()}v${hh}h${-x.bandwidth()}Z`;})
+      .attr('fill',CAT_COLOR[s.key]).attr('stroke','var(--surface)').attr('stroke-width',1.5)
+      .attr('opacity',d=>active('store',d.data.s)?1:.3).style('cursor','pointer')
+      .on('mousemove',(ev,d)=>{const rs=a.filter(r=>r.Store===d.data.s&&r.Product_Category===s.key);const q=agg(rs);
+        showTip(ev,`<b>${L(d.data.s)} · ${L(s.key)}</b>`+row('Doanh thu',fVND(q.R))+row('Tỉ trọng trong cửa hàng',fP(q.R/d.data.R))+row('Lợi nhuận',fVND(q.P))+row('BLN',fP(q.m))+row('Số giao dịch',q.n));hoverCat(s.key);})
+      .on('mouseleave',()=>{hideTip();hoverCat(null);}).on('click',(ev,d)=>toggle('store',d.data.s));
+  });
+  g.selectAll('.ml').data(data).join('text').attr('class','dlabel strong').attr('x',d=>x(d.s)+x.bandwidth()/2).attr('y',d=>y(pct?1:d.R)-7).attr('text-anchor','middle').text(d=>d.n?(x.bandwidth()<75?'':'BLN ')+fP(d.m):'');
+  xAxis(g,x,h,L);
+}
+function chart2b(){
+  const a=rows();
+  const cells=[];STORES.forEach(s=>CATS.forEach(c=>cells.push({s,c,...agg(a.filter(d=>d.Store===s&&d.Product_Category===c))})));
+  const short={'Food & Beverage':'Thực phẩm'};
+  const m={t:30,r:6,b:44,l:72};const {g,w,h}=svgIn('c2b',320,m);
+  const x=d3.scaleBand().domain(CATS).range([0,w]).padding(.06);
+  const y=d3.scaleBand().domain(STORES).range([0,h]).padding(.08);
+  const col=d3.scaleSequential(d3.interpolateRgb('#e3eefc','#0d366b')).domain([.10,.36]).clamp(true);
+  g.selectAll('.xl').data(CATS).join('text').attr('class','axis-label').attr('x',c=>x(c)+x.bandwidth()/2).attr('y',-10).attr('text-anchor','middle').text(c=>{const t=short[c]||L(c);return w<380&&t.length>6?t.slice(0,5)+'.':t;});
+  g.selectAll('.yl').data(STORES).join('text').attr('class','axis-label').attr('x',-8).attr('y',s=>y(s)+y.bandwidth()/2+4).attr('text-anchor','end').text(s=>L(s));
+  const cg=g.selectAll('.cell').data(cells).join('g').attr('data-cat',d=>d.c).attr('transform',d=>`translate(${x(d.c)},${y(d.s)})`);
+  cg.append('rect').attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('rx',4).attr('fill',d=>d.n?col(d.m):'var(--surface-2)');
+  cg.append('text').attr('x',x.bandwidth()/2).attr('y',y.bandwidth()/2).attr('text-anchor','middle').attr('font-size',13).attr('font-weight',600)
+    .attr('fill',d=>d.n&&d.m>.24?'#fff':'var(--ink)').text(d=>d.n?fP(d.m):'–');
+  cg.append('text').attr('x',x.bandwidth()/2).attr('y',y.bandwidth()/2+15).attr('text-anchor','middle').attr('font-size',10.5)
+    .attr('fill',d=>d.n&&d.m>.24?'#dbe7f7':'var(--ink-3)').text(d=>d.n?fM(d.R):'');
+  cg.append('rect').attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('fill','transparent')
+    .on('mousemove',(ev,d)=>showTip(ev,`<b>${L(d.s)} · ${L(d.c)}</b>`+row('Số giao dịch',d.n)+row('Doanh thu',fVND(d.R))+row('Lợi nhuận',fVND(d.P))+row('BLN',fP(d.m))+(d.n&&d.n<5?'<div style="color:#ffcf7a;margin-top:4px">Mẫu nhỏ (n &lt; 5)</div>':''))).on('mouseleave',hideTip);
+  // color legend
+  const lw=Math.min(180,w),lg=g.append('g').attr('transform',`translate(${w-lw},${h+18})`);
+  const id='grad-hm';const gr=d3.select('#c2b svg').append('defs').append('linearGradient').attr('id',id);
+  d3.range(0,1.01,.25).forEach(t=>gr.append('stop').attr('offset',t).attr('stop-color',col(.10+t*.26)));
+  lg.append('rect').attr('width',lw).attr('height',8).attr('rx',3).attr('fill',`url(#${id})`);
+  lg.append('text').attr('class','axis-label').attr('y',20).text('≤10%');lg.append('text').attr('class','axis-label').attr('x',lw).attr('y',20).attr('text-anchor','end').text('≥36% BLN');
+}
+
+// ---------- Insight 3: discount ----------
+const DISCS=[0,5,10,15,20,25,30,35];
+function chart3a(){
+  const a=rows();const data=DISCS.map(k=>({k,...agg(a.filter(d=>d.Discount===k))}));
+  const m={t:22,r:6,b:44,l:40};const {g,w,h}=svgIn('c3a',330,m);
+  const x=d3.scaleBand().domain(DISCS).range([0,w]).padding(.25);
+  const y=d3.scaleLinear().domain([Math.min(-.05,d3.min(data,d=>d.n?d.m:0)),Math.max(.4,d3.max(data,d=>d.n?d.m:0))]).nice().range([h,0]);
+  yGrid(g,y,w,d3.format('.0%'));label(g,'Biên lợi nhuận',-m.l+2,-10);
+  g.append('line').attr('x1',0).attr('x2',w).attr('y1',y(0)).attr('y2',y(0)).attr('stroke','#8f8d86');
+  const b=g.selectAll('.b').data(data).join('g');
+  b.append('path').attr('d',d=>d.n?vBar(x(d.k),y(d.m),y(0),x.bandwidth()):'').attr('fill',d=>d.m<0?'var(--crit)':'var(--prof)');
+  b.append('text').attr('class','dlabel strong').attr('x',d=>x(d.k)+x.bandwidth()/2).attr('y',d=>!d.n?0:d.m<0?y(d.m)+13:y(d.m)-6).attr('text-anchor','middle').attr('font-size',10.5).text(d=>d.n?d3.format('.0%')(d.m):'');
+  xAxis(g,x,h,d=>d+'%');
+  g.selectAll('.nl').data(data).join('text').attr('class','axis-label').attr('x',d=>x(d.k)+x.bandwidth()/2).attr('y',h+30).attr('text-anchor','middle').attr('font-size',10).text(d=>'n='+d.n);
+  b.append('rect').attr('x',d=>x(d.k)-3).attr('width',x.bandwidth()+6).attr('y',0).attr('height',h).attr('fill','transparent')
+    .on('mousemove',(ev,d)=>showTip(ev,`<b>Giảm giá ${d.k}%</b>`+row('Số giao dịch',d.n)+row('Doanh thu',fVND(d.R))+row('Lợi nhuận',fVND(d.P),d.P<0?'neg':'')+row('BLN',fP(d.m),d.m<0?'neg':'')+row('Đánh giá TB',f2(d.rating))+row('Giao dịch lỗ',d.loss))).on('mouseleave',hideTip);
+  const r=pearson(a.map(d=>d.Discount),a.map(d=>d.margin));
+  d3.select('#c3-stat').html(`Hệ số tương quan giữa giảm giá và BLN (theo từng giao dịch): <b>r = ${isNaN(r)?'–':r.toFixed(2)}</b> (n = ${a.length})`);
+}
+let brush3;
+function chart3b(){
+  const a=rows();
+  const m={t:24,r:16,b:40,l:44};const {svg,g,w,h}=svgIn('c3b',370,m);
+  const x=d3.scaleLinear().domain([-2.5,37.5]).range([0,w]);
+  const y=d3.scaleLinear().domain([Math.min(-.15,d3.min(a,d=>d.margin)||0),.5]).nice().range([h,0]);
+  const r=d3.scaleSqrt().domain([0,d3.max(DATA,d=>d.Revenue)]).range([2.5,11]);
+  yGrid(g,y,w,d3.format('.0%'));label(g,'Biên lợi nhuận',-m.l+2,-12);
+  xAxis(g,x,h,d=>d+'%');label(g,'Mức giảm giá',w,h+34,'end');
+  g.select('.axis').call(ax=>ax.selectAll('.tick').filter(d=>d<0||d%5).remove());
+  g.append('line').attr('x1',0).attr('x2',w).attr('y1',y(0)).attr('y2',y(0)).attr('stroke','var(--crit)').attr('stroke-width',1.2);
+  label(g,'hòa vốn (lợi nhuận = 0)',4,y(0)+13,'start','dlabel').attr('fill','var(--crit)');
+  // model curves: margin(d) = 1 - costRatio / (1 - d)
+  const curve=d3.line().x(p=>x(p[0])).y(p=>y(p[1]));
+  ['Electronics','Fashion','Food & Beverage'].forEach(c=>{
+    if(!active('cat',c))return;const cr=COST_RATIO[c];
+    const pts=d3.range(0,36.1,.5).map(d=>[d,1-cr/(1-d/100)]);
+    g.append('path').attr('data-cat',c).attr('d',curve(pts)).attr('fill','none').attr('stroke',CAT_COLOR[c]).attr('stroke-width',1.6).attr('opacity',.85);
+    const be=(1-cr)*100;
+    if(be<=37){g.append('circle').attr('data-cat',c).attr('cx',x(be)).attr('cy',y(0)).attr('r',3.5).attr('fill',CAT_COLOR[c]).attr('stroke','var(--surface)').attr('stroke-width',1.5);}
+    const last=pts[pts.length-1];label(g,`lý thuyết ${c==='Food & Beverage'?'Thực phẩm':L(c)}`,x(last[0])-2,y(last[1])-6,'end','dlabel').attr('data-cat',c);
+  });
+  // brush (below points so tooltips still work)
+  brush3=d3.brush().extent([[0,0],[w,h]]).on('end',ev=>{
+    if(!ev.sourceEvent)return;
+    if(!ev.selection){state.sel=null;applySelection();return;}
+    const [[x0,y0],[x1,y1]]=ev.selection;
+    state.sel=new Set(a.filter(d=>{const px=x(d.Discount+jitter(d.Transaction_ID,1.3)),py=y(d.margin);return px>=x0&&px<=x1&&py>=y0&&py<=y1;}).map(d=>d.Transaction_ID));
+    clearPcBrushes();applySelection();
+  });
+  g.append('g').attr('class','brush').call(brush3);
+  const pts=[...a].sort((p,q)=>q.Revenue-p.Revenue);
+  g.append('g').selectAll('circle').data(pts).join('circle').attr('data-id',d=>d.Transaction_ID).attr('data-cat',d=>d.Product_Category)
+    .attr('cx',d=>x(d.Discount+jitter(d.Transaction_ID,1.3))).attr('cy',d=>y(d.margin)).attr('r',d=>r(d.Revenue))
+    .attr('fill',d=>CAT_COLOR[d.Product_Category]).attr('fill-opacity',.78)
+    .attr('stroke',d=>d.loss?'var(--crit)':'var(--surface)').attr('stroke-width',d=>d.loss?2.2:1)
+    .on('mousemove',(ev,d)=>showTip(ev,txTip(d))).on('mouseleave',hideTip);
+}
+
+// ---------- Insight 4: parallel coordinates ----------
+const PC_DIMS=[
+  {k:'Discount',l:'Giảm giá (%)'},{k:'Unit_Price',l:'Đơn giá (nghìn ₫)',f:v=>v/1000},{k:'Quantity',l:'Số lượng'},
+  {k:'Revenue',l:'Doanh thu (nghìn ₫)',f:v=>v/1000},{k:'margin',l:'BLN (%)',f:v=>v*100},{k:'Delivery_Days',l:'Giao hàng (ngày)'},{k:'Customer_Rating',l:'Đánh giá (1–5)'}];
+const pcBrushes=new Map();let pcRefs=null;
+function clearPcBrushes(){if(!pcRefs)return;pcBrushes.clear();pcRefs.axes.each(function(){d3.select(this).select('.brush').call(pcRefs.brushes[this.dataset.k].move,null);});}
+function chart4(){
+  const a=rows();const emph=d3.select('#pc-loss').property('checked');
+  const m={t:34,r:46,b:14,l:46};const {g,w,h}=svgIn('c4',400,m);
+  const x=d3.scalePoint().domain(PC_DIMS.map(d=>d.k)).range([0,w]);
+  const ys={};PC_DIMS.forEach(d=>{const v=DATA.map(r=>r[d.k]).filter(v=>v!=null);ys[d.k]=d3.scaleLinear().domain(d3.extent(v)).nice().range([h,0]);});
+  const line=d3.line().defined(p=>p[1]!=null).x(p=>p[0]).y(p=>p[1]);
+  const path=d=>line(PC_DIMS.map(p=>[x(p.k),d[p.k]==null?null:ys[p.k](d[p.k])]));
+  const ordered=[...a].sort((p,q)=>p.loss-q.loss);
+  g.append('g').selectAll('path').data(ordered).join('path').attr('class','pcl').attr('data-id',d=>d.Transaction_ID).attr('data-cat',d=>d.Product_Category)
+    .attr('d',path).attr('fill','none').attr('stroke',d=>CAT_COLOR[d.Product_Category])
+    .attr('stroke-width',d=>emph&&d.loss?2.6:1.1).attr('stroke-opacity',d=>emph?(d.loss?1:.14):.38)
+    .on('mousemove',(ev,d)=>showTip(ev,txTip(d))).on('mouseleave',hideTip);
+  // zero-margin reference on margin axis
+  const zy=ys.margin(0);g.append('line').attr('x1',x('margin')-14).attr('x2',x('margin')+14).attr('y1',zy).attr('y2',zy).attr('stroke','var(--crit)').attr('stroke-width',2);
+  label(g,'0',x('margin')+17,zy+4,'start','dlabel').attr('fill','var(--crit)');
+  const brushes={};
+  const axes=g.selectAll('.pca').data(PC_DIMS).join('g').attr('class','pca').attr('data-k',d=>d.k).attr('transform',d=>`translate(${x(d.k)},0)`);
+  axes.each(function(d){const ax=d3.select(this);
+    const yAx=d3.axisLeft(ys[d.k]).ticks(5).tickFormat(v=>d3.format(',')(d.f?+d.f(v).toFixed(1):v));
+    ax.append('g').attr('class','axis').call(yAx).call(s=>s.select('.domain').attr('stroke','#8f8d86'));
+    ax.append('text').attr('y',-16).attr('text-anchor','middle').attr('font-size',11.5).attr('font-weight',600).attr('fill','var(--ink)').text(d.l);
+    const br=d3.brushY().extent([[-11,0],[11,h]]).on('brush end',ev=>{
+      if(ev.selection)pcBrushes.set(d.k,ev.selection.map(ys[d.k].invert).sort((p,q)=>p-q));else pcBrushes.delete(d.k);
+      if(!ev.sourceEvent)return;
+      if(!pcBrushes.size){state.sel=null;}
+      else state.sel=new Set(a.filter(r=>[...pcBrushes].every(([k,[lo,hi]])=>r[k]!=null&&r[k]>=lo&&r[k]<=hi)).map(r=>r.Transaction_ID));
+      if(brush3)d3.select('#c3b .brush').call(brush3.move,null);
+      applySelection();});
+    brushes[d.k]=br;ax.append('g').attr('class','brush').call(br);});
+  pcRefs={axes,brushes};pcBrushes.clear();
+}
+d3.select('#pc-loss').on('change',()=>{chart4();applySelection();});
+d3.select('#sel-loss').on('click',()=>{state.sel=new Set(rows().filter(d=>d.loss).map(d=>d.Transaction_ID));clearPcBrushes();if(brush3)d3.select('#c3b .brush').call(brush3.move,null);applySelection();document.getElementById('explore').scrollIntoView({behavior:'smooth'});});
+
+// ---------- Insight 5: delivery vs rating ----------
+function chart5a(){
+  const a=rows().filter(d=>d.Customer_Rating!=null&&d.Delivery_Days!=null);
+  const days=[1,2,3,4];
+  const m={t:18,r:12,b:40,l:40};const {g,w,h}=svgIn('c5a',330,m);
+  const x=d3.scaleBand().domain(days).range([0,w]).padding(.2);
+  const y=d3.scaleLinear().domain([3.2,5]).range([h,0]);
+  yGrid(g,y,w,d3.format('.1f'));label(g,'Điểm đánh giá',-m.l+2,-6);
+  xAxis(g,x,h,d=>d+' ngày');label(g,'Thời gian giao hàng',w,h+34,'end');
+  g.append('g').selectAll('circle').data(a).join('circle').attr('data-id',d=>d.Transaction_ID)
+    .attr('cx',d=>x(d.Delivery_Days)+x.bandwidth()/2+jitter(d.Transaction_ID,x.bandwidth()*.32)).attr('cy',d=>y(Math.max(3.2,d.Customer_Rating)))
+    .attr('r',3.6).attr('fill','#86b6ef').attr('fill-opacity',.7).attr('stroke','var(--surface)').attr('stroke-width',.8)
+    .on('mousemove',(ev,d)=>showTip(ev,txTip(d))).on('mouseleave',hideTip);
+  const means=days.map(k=>{const s=a.filter(d=>d.Delivery_Days===k);return{k,n:s.length,v:d3.mean(s,d=>d.Customer_Rating)};}).filter(d=>d.n);
+  g.append('path').attr('d',d3.line().x(d=>x(d.k)+x.bandwidth()/2).y(d=>y(d.v))(means)).attr('fill','none').attr('stroke','var(--prof)').attr('stroke-width',2);
+  const mg=g.selectAll('.mean').data(means).join('g').attr('transform',d=>`translate(${x(d.k)+x.bandwidth()/2},${y(d.v)})`);
+  mg.append('rect').attr('x',-x.bandwidth()*.3).attr('y',-2).attr('width',x.bandwidth()*.6).attr('height',4).attr('rx',2).attr('fill','var(--prof)');
+  mg.append('text').attr('class','dlabel strong').attr('x',x.bandwidth()*.3+4).attr('y',-6).attr('font-size',12).text(d=>'★ '+d.v.toFixed(2));
+  mg.append('text').attr('class','dlabel').attr('x',x.bandwidth()*.3+4).attr('y',8).attr('font-size',10.5).text(d=>'n='+d.n);
+  const r=pearson(a.map(d=>d.Delivery_Days),a.map(d=>d.Customer_Rating));
+  d3.select('#c5-stat').html(`Hệ số tương quan giữa số ngày giao và điểm đánh giá: <b>r = ${isNaN(r)?'–':r.toFixed(2)}</b> (n = ${a.length}; đã loại các dòng thiếu dữ liệu)`);
+}
+d3.select('#c5b-legend').html([1,2,3,4].map((d,i)=>`<span class="it"><i class="sw" style="background:${DELIV_COLOR[i]}"></i>${d} ngày</span>`).join(''));
+function chart5b(){
+  const all=rows({store:true}),a=all.filter(d=>d.Delivery_Days!=null);
+  const data=STORES.map(s=>{const rs=a.filter(d=>d.Store===s);const o={s,n:rs.length,deliv:d3.mean(rs,d=>d.Delivery_Days),rating:d3.mean(all.filter(d=>d.Store===s),d=>d.Customer_Rating)};[1,2,3,4].forEach(k=>o[k]=rs.length?rs.filter(d=>d.Delivery_Days===k).length/rs.length:0);return o;}).sort((p,q)=>(p.deliv??9)-(q.deliv??9));
+  const m={t:6,r:118,b:26,l:76};const {g,w,h}=svgIn('c5b',260,m);
+  const y=d3.scaleBand().domain(data.map(d=>d.s)).range([0,h]).padding(.3);
+  const x=d3.scaleLinear().domain([0,1]).range([0,w]);
+  g.append('g').attr('class','grid').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(4).tickSize(-h).tickFormat(d3.format('.0%')));
+  const series=d3.stack().keys([1,2,3,4])(data);
+  series.forEach((s,i)=>g.append('g').selectAll('rect').data(s).join('rect')
+    .attr('x',d=>x(d[0])).attr('width',d=>Math.max(0,x(d[1])-x(d[0]))).attr('y',d=>y(d.data.s)).attr('height',y.bandwidth())
+    .attr('fill',DELIV_COLOR[i]).attr('stroke','var(--surface)').attr('stroke-width',1.5).attr('opacity',d=>active('store',d.data.s)?1:.3).style('cursor','pointer')
+    .on('mousemove',(ev,d)=>showTip(ev,`<b>${L(d.data.s)}</b>`+row(`Đơn giao ${s.key} ngày`,`${Math.round((d[1]-d[0])*d.data.n)} / ${d.data.n}`)+row('Tỉ lệ',fP(d[1]-d[0]))+row('Từ 3 ngày trở lên',fP(d.data[3]+d.data[4])))).on('mouseleave',hideTip)
+    .on('click',(ev,d)=>toggle('store',d.data.s)));
+  g.selectAll('.yl').data(data).join('text').attr('class','axis-label').attr('x',-8).attr('y',d=>y(d.s)+y.bandwidth()/2+4).attr('text-anchor','end').text(d=>L(d.s));
+  const rl=g.selectAll('.rl').data(data).join('g').attr('transform',d=>`translate(${w+10},${y(d.s)+y.bandwidth()/2})`);
+  rl.append('text').attr('class','dlabel strong').attr('y',-2).attr('font-size',12).text(d=>d.n?`${d.deliv.toFixed(2)} ngày · ★ ${f2(d.rating)}`:'–');
+  rl.append('text').attr('class','dlabel').attr('y',12).attr('font-size',10.5).text(d=>d.n?`${fP(d[3]+d[4])} giao từ 3 ngày`:'');
+}
+
+// ---------- Insight 6: monthly ----------
+function chart6(){
+  const a=rows({month:true});
+  const data=MONTHS.map((mo,i)=>{const rs=a.filter(d=>d.mi===i);const o={mo,i,...agg(rs)};CATS.forEach(c=>o[c]=d3.sum(rs.filter(d=>d.Product_Category===c),d=>d.Revenue));return o;});
+  const inRange=i=>i>=state.m0&&i<=state.m1;
+  const m={t:20,r:10,b:26,l:46};
+  // panel A
+  const A=svgIn('c6a',260,m);
+  const x=d3.scaleBand().domain(MONTHS).range([0,A.w]).padding(.22);
+  const yA=d3.scaleLinear().domain([0,d3.max(data,d=>d.R)||1]).nice().range([A.h,0]);
+  yGrid(A.g,yA,A.w,v=>v/1e6,4);label(A.g,'Triệu đồng',-m.l+2,-8);
+  const bandA=A.g.append('rect').attr('class','hover-band').attr('y',-6).attr('height',A.h+6).attr('width',x.step()).attr('rx',6);
+  const series=d3.stack().keys(CATS)(data);
+  const top=d=>{for(let i=CATS.length-1;i>=0;i--)if(d[CATS[i]]>0)return CATS[i];};
+  series.forEach(s=>A.g.append('g').selectAll('path').data(s.filter(d=>d[1]>d[0])).join('path').attr('data-cat',s.key)
+    .attr('d',d=>{const x0=x(d.data.mo),y1=yA(d[1]),hh=yA(d[0])-yA(d[1]);return top(d.data)===s.key?barUp(x0,y1,x.bandwidth(),hh):`M${x0},${y1}h${x.bandwidth()}v${hh}h${-x.bandwidth()}Z`;})
+    .attr('fill',CAT_COLOR[s.key]).attr('stroke','var(--surface)').attr('stroke-width',1.2).attr('opacity',d=>inRange(d.data.i)?1:.25));
+  const peak=data.reduce((p,q)=>q.R>p.R?q:p);
+  if(peak.R>0)label(A.g,fM(peak.R),x(peak.mo)+x.bandwidth()/2,yA(peak.R)-6,'middle','dlabel strong');
+  xAxis(A.g,x,A.h,mo=>MONTHS_VI[MONTHS.indexOf(mo)]);
+  // panel B
+  const B=svgIn('c6b',230,m);
+  const vals=data.filter(d=>d.n).flatMap(d=>[d.m,d.disc/100]);
+  const yB=d3.scaleLinear().domain([0,Math.max(.35,d3.max(vals)||0)]).nice().range([B.h,0]);
+  yGrid(B.g,yB,B.w,d3.format('.0%'),4);label(B.g,'Phần trăm',-m.l+2,-8);
+  const bandB=B.g.append('rect').attr('class','hover-band').attr('y',-6).attr('height',B.h+6).attr('width',x.step()).attr('rx',6);
+  const cx=d=>x(d.mo)+x.bandwidth()/2;
+  [['m',d=>d.m,'var(--s-margin)','margin'],['disc',d=>d.disc/100,'var(--s-disc)','avg discount']].forEach(([k,acc,c,name])=>{
+    const pts=data.filter(d=>d.n);
+    B.g.append('path').attr('d',d3.line().x(cx).y(d=>yB(acc(d)))(pts)).attr('fill','none').attr('stroke',c).attr('stroke-width',2);
+    B.g.append('g').selectAll('circle').data(pts).join('circle').attr('cx',cx).attr('cy',d=>yB(acc(d))).attr('r',4).attr('fill',c).attr('stroke','var(--surface)').attr('stroke-width',2).attr('opacity',d=>inRange(d.i)?1:.3);
+  });
+  xAxis(B.g,x,B.h,mo=>MONTHS_VI[MONTHS.indexOf(mo)]);
+  // shared hover + click
+  const tipM=d=>`<b>Tháng ${d.i+1}/2025</b>`+row('Số giao dịch',d.n)+row('Doanh thu',fVND(d.R))+row('Lợi nhuận',fVND(d.P))+row('BLN',fP(d.m))+row('Giảm giá TB',d.n?d.disc.toFixed(1)+'%':'–')+'<div style="margin-top:4px;color:#bdbbb4">Bấm để lọc theo tháng này</div>';
+  [[A,bandA],[B,bandB]].forEach(([P])=>{
+    P.g.selectAll('.hitm').data(data).join('rect').attr('class','hitm').attr('x',d=>x(d.mo)-x.step()*x.paddingInner()/2).attr('width',x.step()).attr('y',-6).attr('height',P.h+6).attr('fill','transparent').style('cursor','pointer')
+      .on('mousemove',(ev,d)=>{const xx=x(d.mo)-x.step()*x.paddingInner()/2;bandA.attr('x',xx).style('opacity',.05);bandB.attr('x',xx).style('opacity',.05);showTip(ev,tipM(d));})
+      .on('mouseleave',()=>{bandA.style('opacity',0);bandB.style('opacity',0);hideTip();})
+      .on('click',(ev,d)=>{if(state.m0===d.i&&state.m1===d.i){state.m0=0;state.m1=11;}else{state.m0=state.m1=d.i;}state.sel=null;update();});
+  });
+}
+
+// ---------- table + selection ----------
+const COLS=[['Transaction_ID','Mã'],['Date','Ngày'],['Store','Cửa hàng'],['Product_Category','Danh mục'],['Product','Sản phẩm'],['Customer_Type','Khách hàng'],['Payment_Method','Thanh toán'],['Quantity','SL',1],['Unit_Price','Đơn giá',1],['Discount','Giảm %',1],['Revenue','Doanh thu',1],['Profit','Lợi nhuận',1],['margin','BLN',1],['Customer_Rating','Đánh giá',1],['Delivery_Days','Ngày giao',1]];
+let sortK='Date',sortAsc=true;
+function renderTable(){
+  let a=rows();if(state.sel)a=a.filter(d=>state.sel.has(d.Transaction_ID));
+  a=[...a].sort((p,q)=>{const u=p[sortK],v=q[sortK];if(u==null)return 1;if(v==null)return -1;return (u<v?-1:u>v?1:0)*(sortAsc?1:-1);});
+  const t=d3.select('#tbl');t.selectAll('*').remove();
+  t.append('thead').append('tr').selectAll('th').data(COLS).join('th').attr('class',c=>c[2]?'num':'').text(c=>c[1]+(sortK===c[0]?(sortAsc?' ▲':' ▼'):''))
+    .on('click',(ev,c)=>{if(sortK===c[0])sortAsc=!sortAsc;else{sortK=c[0];sortAsc=true;}renderTable();});
+  const fmt={Unit_Price:d3.format(','),Revenue:d3.format(','),Profit:d3.format(','),margin:fP};
+  t.append('tbody').selectAll('tr').data(a).join('tr').classed('hl',d=>d.loss).selectAll('td').data(d=>COLS.map(c=>[c,d])).join('td')
+    .attr('class',([c,d])=>(c[2]?'num':'')+((c[0]==='Profit'||c[0]==='margin')&&d.loss?' neg':'')).text(([c,d])=>{const v=d[c[0]];return v==null?'—':(fmt[c[0]]?fmt[c[0]](v):L(v));});
+}
+function applySelection(){
+  const s=state.sel;
+  d3.selectAll('[data-id]').classed('unsel',function(){return !!s&&!s.has(this.getAttribute('data-id'));}).classed('sel',function(){return !!s&&s.has(this.getAttribute('data-id'));});
+  const bar=d3.select('#selbar').classed('show',!!s);
+  if(s){const sel=rows().filter(d=>s.has(d.Transaction_ID));const q=agg(sel);
+    d3.select('#seltext').html(`Đã chọn <b>${q.n}</b> giao dịch · doanh thu ${fM(q.R)} · lợi nhuận ${fM(q.P)} · BLN <b>${fP(q.m)}</b> · đánh giá TB ${f2(q.rating)}`);}
+  renderTable();
+}
+d3.select('#clearsel').on('click',()=>{state.sel=null;clearPcBrushes();if(brush3)d3.select('#c3b .brush').call(brush3.move,null);applySelection();});
+
+function update(){renderFilters();renderCatLegends();renderKPIs();chart1();chart2a();chart2b();chart3a();chart3b();chart4();chart5a();chart5b();chart6();applySelection();}
+// re-render when the layout width changes (window resize, rotation, font load)
+let rt,lastW=0;
+new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(w===lastW)return;lastW=w;clearTimeout(rt);rt=setTimeout(update,120);}).observe(document.querySelector('main'));
+update();
+})();
+</script>
+</body>
+</html>
