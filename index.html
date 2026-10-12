@@ -307,9 +307,10 @@ footer{padding:30px 0 50px;font-size:12.5px;color:var(--ink-3)}
   <!-- INSIGHT 6 -->
   <section class="card insight" id="i6">
     <div class="ihead"><div class="inum">6</div><div>
-      <h2>Quý 4 bán chạy nhất, nhưng khuyến mãi dày đặc trong tháng 12 khiến đây là giai đoạn có biên lợi nhuận thấp nhất năm</h2>
+      <h2>Quý 4 bán chạy nhất năm nhưng có biên lợi nhuận thấp nhất trong 4 quý, vì giảm giá nhiều hơn, nhất là trong tháng 12</h2>
       <div class="q">Câu hỏi: doanh thu và khả năng sinh lời thay đổi thế nào trong năm?</div></div></div>
     <p class="ctitle">Doanh thu theo tháng, chia theo danh mục</p>
+    <p class="csub">Số trên mỗi cột là doanh thu tháng (triệu đồng). Hàng trên cùng là tổng doanh thu và BLN của từng quý.</p>
     <div class="legend cat-legend"></div>
     <div class="chart" id="c6a"></div>
     <p class="ctitle" style="margin-top:14px">Biên lợi nhuận và mức giảm giá trung bình theo tháng</p>
@@ -318,8 +319,8 @@ footer{padding:30px 0 50px;font-size:12.5px;color:var(--ink-3)}
     <div class="hint">Rê chuột lên một tháng để xem cả hai biểu đồ cùng lúc. Bấm vào một tháng để lọc cả trang theo tháng đó (bấm lần nữa để bỏ lọc).</div>
     <div class="explain">
       <div><h4>Biểu đồ cho thấy gì</h4><p>Hai biểu đồ dùng chung trục tháng: phía trên là doanh thu (cột chồng theo danh mục), phía dưới là BLN và mức giảm giá (cùng đơn vị %, chung một trục). Hai biểu đồ được tách riêng có chủ đích, để không phải đặt hai thang đo khác nhau trên cùng một biểu đồ.</p></div>
-      <div><h4>Quy luật</h4><p>Quý 4 là quý mạnh nhất (<b>60.5 tr</b>, 32% doanh thu cả năm), quý 2 yếu nhất (28.3 tr). Tháng 11 có doanh thu cao nhất (22.2 tr). Nhưng mức giảm giá trung bình tăng từ ~10% ở tháng 10 lên <b>13.9% ở tháng 11 và 17.6% ở tháng 12</b>, và BLN tháng 12 giảm còn <b>20.2%</b>. Giữa các tháng, giảm giá và BLN biến động ngược chiều nhau (r ≈ −0.45).</p></div>
-      <div><h4>Vì sao quan trọng</h4><p>Khuyến mãi mùa lễ kéo được doanh số nhưng phải đánh đổi biên lợi nhuận. Tháng 12 lãi ít hơn tháng 7 dù doanh thu tương đương (3.9 tr so với 6.1 tr). Nên tập trung khuyến mãi vào danh mục có BLN cao như Thời trang, không phải Điện tử. Lưu ý: BLN thấp của tháng 6 chỉ dựa trên 14 giao dịch.</p></div>
+      <div><h4>Quy luật</h4><p>Quý 4 có doanh thu cao nhất (<b>60.5 tr</b>, 32% cả năm), Quý 2 thấp nhất (28.3 tr). Nhưng Quý 4 cũng có BLN thấp nhất trong 4 quý (<b>23.9%</b>, so với 26.7% của Quý 1), vì mức giảm giá trung bình của Quý 4 là 13.9%, cao hơn hẳn các quý khác (khoảng 10–11%). Rõ nhất là tháng 12: giảm giá trung bình <b>17.6%</b>, cao nhất năm, và BLN chỉ còn <b>20.2%</b>. Xét theo tháng, giảm giá và BLN biến động ngược chiều nhau (r ≈ −0.45).</p></div>
+      <div><h4>Vì sao quan trọng</h4><p>Khuyến mãi mùa lễ kéo được doanh số nhưng phải đánh đổi lợi nhuận. Tháng 12 có doanh thu gần bằng tháng 7 (19.5 tr và 21.0 tr) nhưng lãi ít hơn khoảng 1/3 (3.9 tr so với 6.1 tr). Nên tập trung khuyến mãi vào danh mục có BLN cao như Thời trang, không phải Điện tử. Lưu ý: BLN của Quý 4 (23.9%) chỉ thấp hơn Quý 2 (24.3%) một chút. Tháng 6 có BLN thấp nhất (19.7%), nhưng chỉ dựa trên 14 giao dịch.</p></div>
     </div>
   </section>
 
@@ -671,11 +672,20 @@ function chart6(){
   const data=MONTHS.map((mo,i)=>{const rs=a.filter(d=>d.mi===i);const o={mo,i,...agg(rs)};CATS.forEach(c=>o[c]=d3.sum(rs.filter(d=>d.Product_Category===c),d=>d.Revenue));return o;});
   const inRange=i=>i>=state.m0&&i<=state.m1;
   const m={t:20,r:10,b:26,l:46};
-  // panel A
-  const A=svgIn('c6a',260,m);
+  // panel A (extra top margin for the quarter headers)
+  const A=svgIn('c6a',300,{...m,t:58});
   const x=d3.scaleBand().domain(MONTHS).range([0,A.w]).padding(.22);
   const yA=d3.scaleLinear().domain([0,d3.max(data,d=>d.R)||1]).nice().range([A.h,0]);
   yGrid(A.g,yA,A.w,v=>v/1e6,4);label(A.g,'Triệu đồng',-m.l+2,-8);
+  // quarter headers: total revenue, share of year and margin per quarter
+  const totR=d3.sum(data,d=>d.R);
+  const qs=[0,1,2,3].map(q=>{const ms=data.slice(q*3,q*3+3);const R=d3.sum(ms,d=>d.R),P=d3.sum(ms,d=>d.P);return{q,R,P,m:R?P/R:NaN,x0:x(MONTHS[q*3])-x.step()*x.paddingInner()/2,x1:x(MONTHS[q*3+2])+x.bandwidth()+x.step()*x.paddingInner()/2};});
+  const bestQ=qs.reduce((p,c)=>c.R>p.R?c:p);
+  const qg=A.g.selectAll('.qh').data(qs).join('g');
+  qg.filter(d=>d.q>0).append('line').attr('x1',d=>d.x0).attr('x2',d=>d.x0).attr('y1',-50).attr('y2',A.h).attr('stroke','var(--line)');
+  qg.append('text').attr('class',d=>'dlabel'+(d===bestQ?' strong':'')).attr('x',d=>(d.x0+d.x1)/2).attr('y',-38).attr('text-anchor','middle').attr('font-size',A.w>520?11.5:10.5)
+    .text(d=>(A.w>520?`Quý ${d.q+1} · `:`Q${d.q+1} · `)+fM(d.R)+(A.w>520&&totR?` (${d3.format('.0%')(d.R/totR)})`:''));
+  qg.append('text').attr('class','dlabel').attr('x',d=>(d.x0+d.x1)/2).attr('y',-24).attr('text-anchor','middle').attr('font-size',A.w>520?10.5:10).attr('fill','var(--ink-3)').text(d=>d.R?'BLN '+fP(d.m):'');
   const bandA=A.g.append('rect').attr('class','hover-band').attr('y',-6).attr('height',A.h+6).attr('width',x.step()).attr('rx',6);
   const series=d3.stack().keys(CATS)(data);
   const top=d=>{for(let i=CATS.length-1;i>=0;i--)if(d[CATS[i]]>0)return CATS[i];};
@@ -683,7 +693,9 @@ function chart6(){
     .attr('d',d=>{const x0=x(d.data.mo),y1=yA(d[1]),hh=yA(d[0])-yA(d[1]);return top(d.data)===s.key?barUp(x0,y1,x.bandwidth(),hh):`M${x0},${y1}h${x.bandwidth()}v${hh}h${-x.bandwidth()}Z`;})
     .attr('fill',CAT_COLOR[s.key]).attr('stroke','var(--surface)').attr('stroke-width',1.2).attr('opacity',d=>inRange(d.data.i)?1:.25));
   const peak=data.reduce((p,q)=>q.R>p.R?q:p);
-  if(peak.R>0)label(A.g,fM(peak.R),x(peak.mo)+x.bandwidth()/2,yA(peak.R)-6,'middle','dlabel strong');
+  const showAll=x.bandwidth()>=30;
+  A.g.selectAll('.rl').data(data.filter(d=>d.R>0&&(showAll||d===peak))).join('text').attr('class',d=>'dlabel'+(d===peak?' strong':''))
+    .attr('x',d=>x(d.mo)+x.bandwidth()/2).attr('y',d=>yA(d.R)-6).attr('text-anchor','middle').attr('font-size',10.5).text(d=>d3.format('.1f')(d.R/1e6));
   xAxis(A.g,x,A.h,mo=>MONTHS_VI[MONTHS.indexOf(mo)]);
   // panel B
   const B=svgIn('c6b',230,m);
